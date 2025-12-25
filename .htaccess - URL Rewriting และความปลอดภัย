@@ -1,0 +1,69 @@
+# .htaccess - ไฟล์สำหรับ Apache Web Server
+
+# เปิดใช้งาน Rewrite Engine
+RewriteEngine On
+
+# บังคับใช้ HTTPS (ถ้ามี SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ป้องกันการเข้าถึงไฟล์ที่ไม่ควรเข้าถึง
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ป้องกันการเรียกดูโฟลเดอร์
+Options -Indexes
+
+# ป้องกันการเข้าถึงไฟล์ config
+<Files database.php>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# ป้องกันการเข้าถึง .sql files
+<FilesMatch "\.(sql)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# กำหนด Error Pages (ถ้าต้องการ)
+# ErrorDocument 404 /404.php
+# ErrorDocument 403 /403.php
+# ErrorDocument 500 /500.php
+
+# เพิ่มความปลอดภัย Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Compress CSS, JavaScript, HTML
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Cache static files
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# UTF-8 encoding
+AddDefaultCharset UTF-8
+
+# ป้องกัน SQL Injection และ XSS
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|[|%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
+    RewriteRule .* index.php [F,L]
+</IfModule>

@@ -1,0 +1,88 @@
+<?php
+// setup.php - รันไฟล์นี้ครั้งเดียวหลังติดตั้ง
+echo "<h1>กำลังติดตั้งระบบ...</h1>";
+
+$errors = [];
+$success = [];
+
+// สร้างโฟลเดอร์
+$folders = [
+    'uploads',
+    'uploads/qrcodes',
+    'uploads/profiles',
+    'uploads/maintenance'
+];
+
+foreach($folders as $folder) {
+    if (!file_exists($folder)) {
+        if (mkdir($folder, 0777, true)) {
+            $success[] = "✓ สร้างโฟลเดอร์ {$folder} สำเร็จ";
+        } else {
+            $errors[] = "✗ ไม่สามารถสร้างโฟลเดอร์ {$folder} ได้";
+        }
+    } else {
+        $success[] = "✓ โฟลเดอร์ {$folder} มีอยู่แล้ว";
+    }
+}
+
+// ตรวจสอบการเชื่อมต่อฐานข้อมูล
+try {
+    require_once 'config/database.php';
+    $database = new Database();
+    $db = $database->getConnection();
+    $success[] = "✓ เชื่อมต่อฐานข้อมูลสำเร็จ";
+} catch(Exception $e) {
+    $errors[] = "✗ ไม่สามารถเชื่อมต่อฐานข้อมูล: " . $e->getMessage();
+}
+
+// แสดงผล
+echo "<div style='max-width: 800px; margin: 50px auto; font-family: Arial, sans-serif;'>";
+
+if(count($success) > 0) {
+    echo "<div style='background: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 20px;'>";
+    echo "<h2 style='color: #155724; margin-top: 0;'>การติดตั้งสำเร็จ</h2>";
+    foreach($success as $msg) {
+        echo "<p style='color: #155724; margin: 5px 0;'>{$msg}</p>";
+    }
+    echo "</div>";
+}
+
+if(count($errors) > 0) {
+    echo "<div style='background: #f8d7da; padding: 20px; border-radius: 8px; margin-bottom: 20px;'>";
+    echo "<h2 style='color: #721c24; margin-top: 0;'>พบข้อผิดพลาด</h2>";
+    foreach($errors as $msg) {
+        echo "<p style='color: #721c24; margin: 5px 0;'>{$msg}</p>";
+    }
+    echo "</div>";
+}
+
+echo "<div style='background: #fff3cd; padding: 20px; border-radius: 8px;'>";
+echo "<h2 style='color: #856404; margin-top: 0;'>ขั้นตอนถัดไป</h2>";
+echo "<ol style='color: #856404;'>";
+echo "<li>ตรวจสอบว่าทุกอย่างเรียบร้อย ✓</li>";
+echo "<li>เข้าสู่ระบบที่: <a href='login.php'>login.php</a></li>";
+echo "<li>ใช้บัญชี: <strong>owner / password</strong></li>";
+echo "<li>ลบไฟล์ setup.php นี้เพื่อความปลอดภัย</li>";
+echo "</ol>";
+echo "</div>";
+
+echo "</div>";
+
+// สร้างไฟล์ .htaccess สำหรับความปลอดภัย
+$htaccess_content = "# Protect config folder
+<Files ~ \"\.php$\">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Protect database.php
+<Files database.php>
+    Order allow,deny
+    Deny from all
+</Files>";
+
+if (!file_exists('config/.htaccess')) {
+    file_put_contents('config/.htaccess', $htaccess_content);
+    echo "<p style='text-align: center; color: green; margin-top: 20px;'>✓ สร้างไฟล์ความปลอดภัย .htaccess</p>";
+}
+?>
